@@ -1,0 +1,6 @@
+client_id	round	delay
+2	2	15
+4	2	25
+0	4	5
+1	4	10
+3	3	20

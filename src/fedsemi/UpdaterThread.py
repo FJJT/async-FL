@@ -2,7 +2,7 @@ import threading
 import time
 
 import torch.utils.data
-import wandb
+#import wandb
 from torch.utils.data import DataLoader
 from utils import ModuleFindTool
 
@@ -105,8 +105,8 @@ class UpdaterThread(threading.Thread):
         self.accuracy_list.append(accuracy)
         self.loss_list.append(loss)
         print('Epoch(t):', epoch, 'accuracy:', accuracy, 'loss', loss)
-        if self.config['enabled']:
-            wandb.log({'accuracy': accuracy, 'loss': loss})
+        # if self.config['enabled']:
+        #     wandb.log({'accuracy': accuracy, 'loss': loss})
         return accuracy
 
     def get_accuracy_and_loss_list(self):

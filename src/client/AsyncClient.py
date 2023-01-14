@@ -8,7 +8,7 @@ from utils import ModuleFindTool
 
 
 class AsyncClient(Client.Client):
-    def __init__(self, c_id, queue, stop_event, delay, train_ds, client_config, dev):
+    def __init__(self, c_id, queue, stop_event, delay, train_ds, client_config, dev, idle_list, idle_list_thread_lock, queue_exist_event, test_filename, test_filename_lock):
         Client.Client.__init__(self, c_id, stop_event, delay, train_ds, dev)
         self.queue = queue
         self.batch_size = client_config["batch_size"]
@@ -17,6 +17,12 @@ class AsyncClient(Client.Client):
         self.optimizer_config = client_config["optimizer"]
         self.mu = client_config["mu"]
         self.config = client_config
+        self.idle_list = idle_list
+        self.idle_list_thread_lock = idle_list_thread_lock
+        self.queue_exist_event = queue_exist_event
+        self.round = 0
+        self.test_filename = test_filename
+        self.test_filename_lock =test_filename_lock
 
         # 本地模型
         model_class = ModuleFindTool.find_class_by_string("model", client_config["model_file"], client_config["model_name"])
@@ -49,23 +55,45 @@ class AsyncClient(Client.Client):
 
             # 该client被选中，开始执行本地训练
             if self.event.is_set():
+                self.round += 1
                 self.client_thread_lock.acquire()
                 # 该client进行训练
                 r_weights = copy.deepcopy(self.model.state_dict())
+                start_time = time.time()
                 data_sum, weights = self.train_one_epoch(r_weights)
-
+                end_time = time.time()
+                true_train_time = end_time - start_time
+                print("true_train_time___________________________",true_train_time)
+                if self.delay - true_train_time > 0:
+                    time.sleep(self.delay - true_train_time)
+                else:
+                    time.sleep(0)
+                    print("\033[1;31m", "Client", self.client_id, "trained dalay smaller than true train time error", "\033[0m")
                 # client传回server的信息具有延迟
                 print("Client", self.client_id, "trained")
-                time.sleep(self.delay)
+
 
                 # 返回其ID、模型参数和时间戳
                 update_dict = {"client_id": self.client_id, "weights": weights, "data_sum": data_sum, "time_stamp": self.time_stamp}
                 self.queue.put(update_dict)
+                # 触发queue非空事件
+                self.queue_exist_event.set()
+                # 返回后，设置为空闲状态
+                self.idle_list_thread_lock.acquire()
+                self.idle_list[self.client_id] = True
+                self.idle_list_thread_lock.release()
                 self.event.clear()
                 self.client_thread_lock.release()
             # 该client等待被选中
             else:
                 self.event.wait()
+        #退出循环中止进程
+        #记录训练数据
+        test_string =str(self.client_id) + '\t' + str(self.round) + '\t' + str(self.delay) + '\n'
+        self.test_filename_lock.acquire()
+        with open('./ex/'+self.test_filename, 'a') as file:
+            file.write(test_string)
+        self.test_filename_lock.release()
 
     def train_one_epoch(self, r_weights):
         return self.model.train_one_epoch(self.epoch, self.dev, self.train_dl, self.model, self.loss_func, self.opti, self.mu)

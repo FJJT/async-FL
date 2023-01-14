@@ -4,7 +4,7 @@ import os
 import shutil
 import threading
 import sys
-import wandb
+#import wandb
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.Tools import *
 from utils.ConfigManager import *
@@ -29,7 +29,7 @@ if __name__ == '__main__':
     server_config = copy.deepcopy(config['server'])
     client_config = copy.deepcopy(config['client'])
     manager_config = copy.deepcopy(config['client_manager'])
-    wandb_config = copy.deepcopy(config['wandb'])
+    #wandb_config = copy.deepcopy(config['wandb'])
 
     # 实验路径相关
     if not global_config["experiment"].endswith("/"):
@@ -65,25 +65,25 @@ if __name__ == '__main__':
             is_cover = False
 
     # 初始化wandb
-    if wandb_config["enabled"]:
-        wandb.init(
-            project=wandb_config["project"],
-            config=config,
-            name=wandb_config["name"],
-        )
-    if wandb_config["enabled"]:
-        try:
-            global_config['stale'] = client_staleness_list
-            with open(os.path.join(wandb.run.dir, "config.json"), "w") as r:
-                json.dump(config, r, indent=4)
-        except shutil.SameFileError:
-            pass
+    # if wandb_config["enabled"]:
+    #     wandb.init(
+    #         project=wandb_config["project"],
+    #         config=config,
+    #         name=wandb_config["name"],
+    #     )
+    # if wandb_config["enabled"]:
+    #     try:
+    #         global_config['stale'] = client_staleness_list
+    #         with open(os.path.join(wandb.run.dir, "config.json"), "w") as r:
+    #             json.dump(config, r, indent=4)
+    #     except shutil.SameFileError:
+    #         pass
     start_time = datetime.datetime.now()
 
     accuracy_lists = []
     loss_lists = []
     # wandb启动配置植入update_config中
-    server_config['updater']['enabled'] = wandb_config['enabled']
+    # server_config['updater']['enabled'] = wandb_config['enabled']
     if global_config['mode'] == 'async':
         server = AsyncServer.AsyncServer(config, global_config, server_config, client_config, manager_config)
     elif global_config['mode'] == 'sync':
@@ -122,8 +122,8 @@ if __name__ == '__main__':
     saveAns("../results/" + global_config["experiment"] + "loss.txt", list(loss_list))
     saveAns("../results/" + global_config["experiment"] + "time.txt", end_time - start_time)
     result_to_markdown("../results/" + global_config["experiment"] + "实验阐述.md", config)
-    if wandb_config['enabled']:
-        saveAns(os.path.join(wandb.run.dir, "accuracy.txt"), list(accuracy_list))
-        saveAns(os.path.join(wandb.run.dir, "loss.txt"), list(loss_list))
-        saveAns(os.path.join(wandb.run.dir, "time.txt"), end_time - start_time)
-        result_to_markdown(os.path.join(wandb.run.dir, "实验阐述.md"), config)
+    # if wandb_config['enabled']:
+    #     saveAns(os.path.join(wandb.run.dir, "accuracy.txt"), list(accuracy_list))
+    #     saveAns(os.path.join(wandb.run.dir, "loss.txt"), list(loss_list))
+    #     saveAns(os.path.join(wandb.run.dir, "time.txt"), end_time - start_time)
+    #     result_to_markdown(os.path.join(wandb.run.dir, "实验阐述.md"), config)

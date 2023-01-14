@@ -8,27 +8,23 @@
     "multi_gpu": true,
     "mode": "async",
     "experiment": "TMP/test/4",
-    "stale": {
-      "step": 1,
-      "shuffle": true,
-      "list": [10, 10, 10, 5, 5, 5, 5]
-    },
+    "stale": [18, 10, 15, 20, 25],
     "data_file": "FashionMNIST",
     "data_name": "FashionMNIST",
     "iid": false,
-    "client_num": 50
+    "client_num": 5
   },
   "server": {
-    "epochs": 2,
+    "epochs": 10,
     "model_file": "CNN",
     "model_name": "CNN",
     "scheduler": {
-      "scheduler_interval": 5,
+      "scheduler_interval": 2,
       "schedule_file": "RandomSchedule",
       "schedule_name": "RandomSchedule",
       "params": {
-        "c_ratio": 0.1,
-        "schedule_interval": 5
+        "c_ratio": 0.6,
+        "schedule_interval": 2
       }
     },
     "updater": {
@@ -50,7 +46,7 @@
     "client_name": "AsyncClient"
   },
   "client": {
-    "epochs": 2,
+    "epochs": 10,
     "batch_size": 50,
     "model_file": "CNN",
     "model_name": "CNN",
