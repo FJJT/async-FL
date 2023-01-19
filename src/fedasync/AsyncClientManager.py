@@ -58,7 +58,7 @@ class AsyncClientManager:
 
     def stop_all_clients(self, server_weights, current_time):
         # 终止所有client线程
-        test_string = "client_id" + '\t' + "round" + '\t' + "delay" + '\n'
+        test_string = "client_id" + '\t' + "round" + '\t' + "delay" + '\t' + "acc" + '\t' + "loss" + '\n'
         self.test_filename_lock.acquire()
         with open('./ex/' + self.test_filename, 'a') as file:
             file.write(test_string)

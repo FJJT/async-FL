@@ -8,14 +8,26 @@
     "multi_gpu": true,
     "mode": "async",
     "experiment": "TMP/test/4",
-    "stale": [18, 10, 15, 20, 25],
-    "data_file": "FashionMNIST",
-    "data_name": "FashionMNIST",
-    "iid": false,
+    "stale": [20, 498, 1366, 976, 207],
+    "data_file": "MNIST",
+    "data_name": "MNIST",
+     "iid": {
+	"label": {
+    		"0": [0, 1],
+    		"1": [2, 3],
+    		"2": [4, 5],
+    		"3": [6, 7],
+    		"4": [8, 9]
+	},
+	 "data": {
+        		"max":1200,
+        		"min": 1200
+      	}	
+     },
     "client_num": 5
   },
   "server": {
-    "epochs": 10,
+    "epochs": 300,
     "model_file": "CNN",
     "model_name": "CNN",
     "scheduler": {

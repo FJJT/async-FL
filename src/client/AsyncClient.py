@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 
 from client import Client
 from utils import ModuleFindTool
-
+import torch
 
 class AsyncClient(Client.Client):
     def __init__(self, c_id, queue, stop_event, delay, train_ds, client_config, dev, idle_list, idle_list_thread_lock, queue_exist_event, test_filename, test_filename_lock):
@@ -33,6 +33,7 @@ class AsyncClient(Client.Client):
         opti_class = ModuleFindTool.find_opti_by_string(self.optimizer_config["name"])
         self.opti = opti_class(self.model.parameters(), lr=self.optimizer_config["lr"], weight_decay=self.optimizer_config["weight_decay"])
 
+        self.test_data = train_ds
         # loss函数
         if isinstance(client_config["loss"], str):
             self.loss_func = ModuleFindTool.find_F_by_string(client_config["loss"])
@@ -40,7 +41,30 @@ class AsyncClient(Client.Client):
             loss_func_class = ModuleFindTool.find_class_by_string("loss", client_config["loss"]["loss_file"], client_config["loss"]["loss_name"])
             self.loss_func = loss_func_class(client_config["loss"], self)
         self.train_dl = DataLoader(self.train_ds, batch_size=self.batch_size, shuffle=True)
-
+    def run_server_test(self, epoch):
+        dl = DataLoader(self.test_data, batch_size=100, shuffle=True)
+        test_correct = 0
+        test_loss = 0
+        for data in dl:
+            inputs, labels = data
+            inputs, labels = inputs.to(self.dev), labels.to(self.dev)
+            # outputs = self.server_network(inputs)
+            outputs = self.model(inputs)
+            _, id = torch.max(outputs.data, 1)
+            test_loss += self.loss_func(outputs, labels).item()
+            test_correct += torch.sum(id == labels.data).cpu().numpy()
+        accuracy = test_correct / len(dl)
+        loss = test_loss / len(dl)
+        # self.loss_list.append(loss)
+        # self.accuracy_list.append(accuracy)
+        # print('Epoch(t):', epoch, 'accuracy:', accuracy, 'loss', loss)
+        # if epoch == 0:
+        #     with open('./ex/'+self.test_filename, 'w') as file:
+        #         file.write("Epoch(t)\taccuracy\tloss\n")
+        # test_string = str(epoch) + '\t' + str(accuracy) + '\t' + str(loss) + '\n'
+        # with open('./ex/'+self.test_filename, 'a') as file:
+        #     file.write(test_string)
+        return accuracy, loss
     def run(self):
         while not self.stop_event.is_set():
             if self.received_weights:
@@ -88,9 +112,18 @@ class AsyncClient(Client.Client):
             else:
                 self.event.wait()
         #退出循环中止进程
+        #测试本地模型
+        #加上if就是用本地数据测试全局模型，不加就是用本地数据测试本地模型
+        if self.received_weights:
+            # 更新模型参数
+            self.model.load_state_dict(self.weights_buffer, strict=True)
+            self.received_weights = False
+        acc, loss = self.run_server_test(self.time_stamp_buffer)
         #记录训练数据
-        test_string =str(self.client_id) + '\t' + str(self.round) + '\t' + str(self.delay) + '\n'
+        test_string =str(self.client_id) + '\t' + str(self.round) + '\t' + str(self.delay) + '\t' + str(acc)\
+                     + '\t' + str(loss) + '\n'
         self.test_filename_lock.acquire()
+
         with open('./ex/'+self.test_filename, 'a') as file:
             file.write(test_string)
         self.test_filename_lock.release()

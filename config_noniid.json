@@ -1,0 +1,73 @@
+{
+  "wandb": {
+    "enabled": true,
+    "project": "non-iid实验对比",
+    "name": "1"
+  },
+  "global": {
+    "multi_gpu": true,
+    "mode": "async",
+    "experiment": "TMP/test/4",
+    "stale": [20, 498, 1366, 976, 207],
+    "data_file": "MNIST",
+    "data_name": "MNIST",
+    "iid": {
+	"label": {
+    		"0": [0, 1],
+    		"1": [2, 3],
+    		"2": [4, 5],
+    		"3": [6, 7],
+    		"4": [8, 9]
+	},
+	 "data": {
+        		"max":1200,
+        		"min": 1200
+      	}	
+     },
+    "client_num": 5
+  },
+  "server": {
+    "epochs": 10,
+    "model_file": "CNN",
+    "model_name": "CNN",
+    "scheduler": {
+      "scheduler_interval": 2,
+      "schedule_file": "RandomSchedule",
+      "schedule_name": "RandomSchedule",
+      "params": {
+        "c_ratio": 0.6,
+        "schedule_interval": 2
+      }
+    },
+    "updater": {
+      "update_file": "MyFed",
+      "update_name": "MyFed",
+      "loss": "cross_entropy",
+      "params": {
+        "a": 10,
+        "b": 4,
+        "alpha": 0.1,
+        "r" : 1,
+        "c" : 2,
+        "d" : 2
+      }
+    }
+  },
+  "client_manager": {
+    "client_file": "AsyncClient",
+    "client_name": "AsyncClient"
+  },
+  "client": {
+    "epochs": 10,
+    "batch_size": 50,
+    "model_file": "CNN",
+    "model_name": "CNN",
+    "loss": "cross_entropy",
+    "mu": 0.01,
+    "optimizer": {
+      "name": "Adam",
+      "weight_decay": 0.005,
+      "lr": 0.01
+    }
+  }
+}
